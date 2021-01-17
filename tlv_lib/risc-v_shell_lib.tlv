@@ -11,7 +11,7 @@ m4+definitions(['
    m4_echo(m4tlv_riscv_gen__body())
 '])
 
-   `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR];         // Verilog macro for use by students
+   `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR[$clog2($size(instrs)) + 1 : 2]];         // Verilog macro for use by students
 
 // Instruction memory in |cpu at the given stage, not for direct use but the array needed by viz infra. Shall be instantiated in the viz or starter code
 \TLV imem(@_stage)
