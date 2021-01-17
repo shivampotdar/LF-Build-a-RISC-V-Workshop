@@ -149,13 +149,13 @@ m4+definitions(['
             $rs1_valid           = 1'b0;
             $rs2_valid           = 1'b0;
             $imm_valid           = 1'b0;
-            $rf_wr_en            = 1'b0;
-            $rf_wr_index[4:0]    = 5'b0;
-            $rf_wr_data[31:0]    = 32'b0;
-            $rf_rd_en1           = 1'b0;
-            $rf_rd_en2           = 1'b0;
-            $rf_rd_index1[4:0]   = 5'b0;
-            $rf_rd_index2[4:0]   = 5'b0;
+            // $rf_wr_en            = 1'b0;
+            // $rf_wr_index[4:0]    = 5'b0;
+            // $rf_wr_data[31:0]    = 32'b0;
+            // $rf_rd_en1           = 1'b0;
+            // $rf_rd_en2           = 1'b0;
+            // $rf_rd_index1[4:0]   = 5'b0;
+            // $rf_rd_index2[4:0]   = 5'b0;
 
             $ld_data[31:0]       = 32'b0;
             $imem_rd_en          = 1'b0;
@@ -177,7 +177,7 @@ m4+definitions(['
             `BOGUS_USE($is_load $is_store)
             `BOGUS_USE($valid $rd $rs1 $rs2 $src1_value $src2_value $result $pc $imm)
             `BOGUS_USE($is_s_instr $rd_valid $rs1_valid $rs2_valid $imm_valid)
-            `BOGUS_USE($rf_wr_en $rf_wr_index $rf_wr_data $rf_rd_en1 $rf_rd_en2 $rf_rd_index1 $rf_rd_index2 $ld_data)
+            // `BOGUS_USE($rf_wr_en $rf_wr_index $rf_wr_data $rf_rd_en1 $rf_rd_en2 $rf_rd_index1 $rf_rd_index2 $ld_data)
             `BOGUS_USE($imem_rd_en $imem_rd_addr)
             
             $dummy[0:0]          = 1'b0;
