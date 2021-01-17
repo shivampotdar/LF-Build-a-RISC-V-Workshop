@@ -126,6 +126,7 @@ m4+definitions(['
             $rd_valid            = 1'b0;
             $rs1_valid           = 1'b0;
             $rs2_valid           = 1'b0;
+            $imm_valid           = 1'b0;
             $rf_wr_en            = 1'b0;
             $rf_wr_index[4:0]    = 5'b0;
             $rf_wr_data[31:0]    = 32'b0;
@@ -153,7 +154,7 @@ m4+definitions(['
             `BOGUS_USE($is_srl $is_sra $is_or $is_and $is_csrrw $is_csrrs $is_csrrc $is_csrrwi $is_csrrsi $is_csrrci)
             `BOGUS_USE($is_load $is_store)
             `BOGUS_USE($valid $rd $rs1 $rs2 $src1_value $src2_value $result $pc $imm)
-            `BOGUS_USE($is_s_instr $rd_valid $rs1_valid $rs2_valid)
+            `BOGUS_USE($is_s_instr $rd_valid $rs1_valid $rs2_valid $imm_valid)
             `BOGUS_USE($rf_wr_en $rf_wr_index $rf_wr_data $rf_rd_en1 $rf_rd_en2 $rf_rd_index1 $rf_rd_index2 $ld_data)
             `BOGUS_USE($imem_rd_en $imem_rd_addr)
             
@@ -207,6 +208,9 @@ m4+definitions(['
                let regStr = (valid, regNum, regValue) => {
                   return valid ? `r${regNum} (${regValue})` : `rX`;
                };
+               let immStr = (valid, immValue) => {
+                  return valid ? `i[${immValue}]` : `No Imm`;
+               }
                let srcStr = ($src, $valid, $reg, $value) => {
                   return $valid.asBool(false)
                              ? `\n      ${regStr(true, $reg.asInt(NaN), $value.asInt(NaN))}`
@@ -214,7 +218,7 @@ m4+definitions(['
                };
                let str = `${regStr('$rd_valid'.asBool(false), '$rd'.asInt(NaN), '$result'.asInt(NaN))}\n` +
                          `  = ${'$mnemonic'.asString()}${srcStr(1, '$rs1_valid', '$rs1', '$src1_value')}${srcStr(2, '$rs2_valid', '$rs2', '$src2_value')}\n` +
-                         `      i[${'$imm'.asInt(NaN)}]`;
+                         `      ${immStr('$imm_valid'.asBool(false), '$imm'.asInt(NaN)}`;
                let instrWithValues = new fabric.Text(str, {
                   top: 70,
                   left: 90,
