@@ -11,10 +11,11 @@ m4+definitions(['
    m4_echo(m4tlv_riscv_gen__body())
 '])
 
+   `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR];         // Verilog macro for use by students
 
-// Instruction memory in |cpu at the given stage.
+// Instruction memory in |cpu at the given stage, not for direct use but the array needed by viz infra. Shall be instantiated in the viz or starter code
 \TLV imem(@_stage)
-   // Instruction Memory containing program defined by m4_asm(...) instantiations.
+   // Instruction Memory containing program defined by m4_asm(...) instantiations.           
    @_stage
       \SV_plus
          // The program in an instruction memory.
@@ -24,8 +25,8 @@ m4+definitions(['
          };
       /M4_IMEM_HIER
          $instr[31:0] = *instrs\[#imem\];
-      ?$imem_rd_en
-         $imem_rd_data[31:0] = /imem[$imem_rd_addr]$instr;
+      // ?$imem_rd_en
+      //    $imem_rd_data[31:0] = /imem[$imem_rd_addr]$instr;
     
 
 // A 2-rd 1-wr register file in |cpu that reads and writes in the given stages. If read/write stages are equal, the read values reflect previous writes.
