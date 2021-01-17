@@ -65,7 +65,7 @@ m4+definitions(['
                                         $RETAIN;
       ?['']$_port2_en
          $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
-         
+
       ?['']$_port3_en
          $$_port3_data[_width-1:0] = /xreg[$_port3_index]>>1$value;
 
@@ -92,8 +92,8 @@ m4+definitions(['
       @0
          $ANY = /top|cpuviz/defaults<>0$ANY;
          `BOGUS_USE($dummy)
-         ///xreg[31:0]
-         //   $ANY = /top|cpuviz/defaults/xreg<>0$ANY;
+         /xreg[31:0]
+           $ANY = /top|cpuviz/defaults/xreg<>0$ANY;
          /dmem[15:0]
             $ANY = /top|cpuviz/defaults/dmem<>0$ANY;
    // String representations of the instructions for debug.
@@ -158,14 +158,19 @@ m4+definitions(['
             // $rf_rd_index2[4:0]   = 5'b0;
 
             $ld_data[31:0]       = 32'b0;
-            $imem_rd_en          = 1'b0;
-            $imem_rd_addr[M4_IMEM_INDEX_CNT-1:0] = {M4_IMEM_INDEX_CNT{1'b0}};
+            // $imem_rd_en          = 1'b0;
+            // $imem_rd_addr[M4_IMEM_INDEX_CNT-1:0] = {M4_IMEM_INDEX_CNT{1'b0}};
             
             /xreg[31:0]
+               $reset            = 1'b1;
+               $wr_en            = 1'b0;
+               $wr_index[4:0]    = 5'b0;
+               $wr_data[31:0]    = 32'b0;
+               `BOGUS_USE($reset $wr_en $wr_index $wr_data)
                $value[31:0]      = 32'b0;
                $wr               = 1'b0;
                `BOGUS_USE($value $wr)
-               //$dummy[0:0]       = 1'b0;
+               $dummy[0:0]       = 1'b0;
             /dmem[15:0]
                $value[31:0]      = 32'0;
                $wr               = 1'b0;
@@ -178,7 +183,7 @@ m4+definitions(['
             `BOGUS_USE($valid $rd $rs1 $rs2 $src1_value $src2_value $result $pc $imm)
             `BOGUS_USE($is_s_instr $rd_valid $rs1_valid $rs2_valid $imm_valid)
             // `BOGUS_USE($rf_wr_en $rf_wr_index $rf_wr_data $rf_rd_en1 $rf_rd_en2 $rf_rd_index1 $rf_rd_index2 $ld_data)
-            `BOGUS_USE($imem_rd_en $imem_rd_addr)
+            `BOGUS_USE($ld_data)
             
             $dummy[0:0]          = 1'b0;
       @_stage
