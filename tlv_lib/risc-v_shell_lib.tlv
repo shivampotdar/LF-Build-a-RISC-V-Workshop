@@ -24,8 +24,8 @@ m4+definitions(['
          assign instrs = '{
             m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
          };
-      /M4_IMEM_HIER
-         $instr[31:0] = *instrs\[#imem\];
+      // /M4_IMEM_HIER
+      //    $instr[31:0] = *instrs\[#imem\];
       // ?$imem_rd_en
       //    $imem_rd_data[31:0] = /imem[$imem_rd_addr]$instr;
     
@@ -81,7 +81,8 @@ m4+definitions(['
    |cpuviz
       @1
          /imem[m4_eval(M4_NUM_INSTRS-1):0]  // TODO: Cleanly report non-integer ranges.
-            $instr[31:0] = /top|cpu/imem<>0$instr;
+            //$instr[31:0] = /top|cpu/imem<>0$instr;
+            $instr[31:0] = *instrs\[#imem\];
             $instr_str[40*8-1:0] = *instr_strs[imem];
             \viz_alpha
                renderEach: function() {
