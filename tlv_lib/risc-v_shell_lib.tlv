@@ -165,7 +165,7 @@ m4+definitions(['
                $value[31:0]      = 32'b0;
                $wr               = 1'b0;
                `BOGUS_USE($value $wr)
-               $dummy[0:0]       = 1'b0;
+               //$dummy[0:0]       = 1'b0;
             /dmem[15:0]
                $value[31:0]      = 32'0;
                $wr               = 1'b0;
