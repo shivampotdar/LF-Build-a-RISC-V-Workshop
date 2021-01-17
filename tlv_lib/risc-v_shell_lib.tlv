@@ -14,21 +14,29 @@ m4+definitions(['
    
 
 // Instruction memory in |cpu at the given stage, not for direct use but the array needed by viz infra. Shall be instantiated in the viz or starter code
-\TLV imem(@_stage)
-   // Instruction Memory containing program defined by m4_asm(...) instantiations.           
-   @_stage
-      \SV_plus
-         // The program in an instruction memory.
-         logic [31:0] instrs [0:M4_NUM_INSTRS-1];
-         `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR[\$clog2(\$size(instrs)) + 1 : 2]];         // Verilog macro for use by students
-         assign instrs = '{
-            m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
-         };
+// \TLV imem(@_stage)
+//    // Instruction Memory containing program defined by m4_asm(...) instantiations.           
+//    @_stage
+//       \SV_plus
+//          // The program in an instruction memory.
+//          logic [31:0] instrs [0:M4_NUM_INSTRS-1];
+//          `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR[\$clog2(\$size(instrs)) + 1 : 2]];         // Verilog macro for use by students
+//          assign instrs = '{
+//             m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
+//          };
       // /M4_IMEM_HIER
       //    $instr[31:0] = *instrs\[#imem\];
       // ?$imem_rd_en
       //    $imem_rd_data[31:0] = /imem[$imem_rd_addr]$instr;
-    
+
+\TLV fill_imem()
+   // The program in an instruction memory.
+   \SV_plus
+      logic [31:0] instrs [0:M4_NUM_INSTRS-1];
+      `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR[\$clog2(\$size(instrs)) + 1 : 2]];         // Verilog macro for use by students
+      assign instrs = '{
+         m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
+      };    
 
 // A 2-rd 1-wr register file in |cpu that reads and writes in the given stages. If read/write stages are equal, the read values reflect previous writes.
 // Reads earlier than writes will require bypass.
