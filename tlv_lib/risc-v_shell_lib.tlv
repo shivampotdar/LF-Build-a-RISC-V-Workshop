@@ -40,20 +40,34 @@ m4+definitions(['
 
 // A 2-rd 1-wr register file in |cpu that reads and writes in the given stages. If read/write stages are equal, the read values reflect previous writes.
 // Reads earlier than writes will require bypass.
-\TLV rf(@_rd, @_wr)
+// \TLV rf(@_rd, @_wr)
+//    // Reg File
+//    @_wr
+//       /xreg[31:0]
+//          $wr = |cpu$rf_wr_en && (|cpu$rf_wr_index != 5'b0) && (|cpu$rf_wr_index == #xreg);
+//          $value[31:0] = |cpu$reset ?   #xreg           :
+//                         $wr        ?   |cpu$rf_wr_data :
+//                                        $RETAIN;
+//    @_rd
+//       ?$rf_rd_en1
+//          $rf_rd_data1[31:0] = /xreg[$rf_rd_index1]>>m4_stage_eval(@_wr - @_rd + 1)$value;
+//       ?$rf_rd_en2
+//          $rf_rd_data2[31:0] = /xreg[$rf_rd_index2]>>m4_stage_eval(@_wr - @_rd + 1)$value;
+//       `BOGUS_USE($rf_rd_data1 $rf_rd_data2) 
+\TLV rf(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data, _port3_mode, $_port3_en, $_port3_index, $$_port3_data)
    // Reg File
-   @_wr
-      /xreg[31:0]
-         $wr = |cpu$rf_wr_en && (|cpu$rf_wr_index != 5'b0) && (|cpu$rf_wr_index == #xreg);
-         $value[31:0] = |cpu$reset ?   #xreg           :
-                        $wr        ?   |cpu$rf_wr_data :
-                                       $RETAIN;
-   @_rd
-      ?$rf_rd_en1
-         $rf_rd_data1[31:0] = /xreg[$rf_rd_index1]>>m4_stage_eval(@_wr - @_rd + 1)$value;
-      ?$rf_rd_en2
-         $rf_rd_data2[31:0] = /xreg[$rf_rd_index2]>>m4_stage_eval(@_wr - @_rd + 1)$value;
-      `BOGUS_USE($rf_rd_data1 $rf_rd_data2) 
+   @1
+      /xreg[_entries-1:0]
+         //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
+         $wr    = $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #xreg);
+         $value[_width-1:0] = $_reset ? #xreg        :
+                              $wr     ? $_port1_data :
+                                        $RETAIN;
+      ?['']$_port2_en
+         $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
+         
+      ?['']$_port3_en
+         $$_port3_data[_width-1:0] = /xreg[$_port3_index]>>1$value;
 
 
 // A data memory in |cpu at the given stage. Reads and writes in the same stage, where reads are of the data written by the previous transaction.

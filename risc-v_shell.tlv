@@ -63,7 +63,7 @@
    //  o data memory
    //  o CPU visualization
    |cpu
-      //m4+rf(@1, @1)  // Args: (read stage, write stage) - if equal, no register bypass is required
+      m4+rf(32, 32, $reset, W, $wr_en, $wr_index, $wr_data, R, $rd_en1, $rd_index1, $rd_data1, R, $rd_en2, $rd_index2, $rd_data2)
       //m4+dmem(@4)    // Args: (read/write stage)
    
    //m4+cpu_viz(@4)    // For visualisation, argument should be at least equal to the last stage of CPU logic
