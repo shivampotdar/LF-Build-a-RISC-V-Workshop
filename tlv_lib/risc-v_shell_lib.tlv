@@ -218,7 +218,7 @@ m4+definitions(['
                };
                let str = `${regStr('$rd_valid'.asBool(false), '$rd'.asInt(NaN), '$result'.asInt(NaN))}\n` +
                          `  = ${'$mnemonic'.asString()}${srcStr(1, '$rs1_valid', '$rs1', '$src1_value')}${srcStr(2, '$rs2_valid', '$rs2', '$src2_value')}\n` +
-                         `      ${immStr('$imm_valid'.asBool(false), '$imm'.asInt(NaN)}`;
+                         `      ${immStr('$imm_valid'.asBool(false), '$imm'.asInt(NaN))}`;
                let instrWithValues = new fabric.Text(str, {
                   top: 70,
                   left: 90,
