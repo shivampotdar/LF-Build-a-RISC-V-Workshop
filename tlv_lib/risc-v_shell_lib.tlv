@@ -60,16 +60,16 @@ m4+definitions(['
    @1
       /xreg[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr                  =  $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #xreg);
-         $value[_width-1:0]   =  $_reset ?   #xreg        :
-                                 $wr     ?   $_port1_data :
-                                             $RETAIN;
+         $wr                  =  |cpu$_port1_en && (|cpu$_port1_index != 5'b0) && (|cpu$_port1_index == #xreg);
+         $value[_width-1:0]   =  |cpu$_reset ?   #xreg        :
+                                 >>1$wr         ?   |cpu>>1$_port1_data :
+                                                 $RETAIN;
 
       ?['']$_port2_en
-         $$_port2_data[_width-1:0]  =  /xreg[$_port2_index]>>1$value;
+         $$_port2_data[_width-1:0]  =  /xreg[|cpu$_port2_index]$value;
 
       ?['']$_port3_en
-         $$_port3_data[_width-1:0]  =  /xreg[$_port3_index]>>1$value;
+         $$_port3_data[_width-1:0]  =  /xreg[|cpu$_port3_index]$value;
 
 
 // A data memory in |cpu at the given stage. Reads and writes in the same stage, where reads are of the data written by the previous transaction.
@@ -91,13 +91,13 @@ m4+definitions(['
    @1
       /dmem[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr                  =  $_port1_en && ($_port1_index == #dmem);
-         $value[_width-1:0]   =  $_reset  ?  #dmem        :
-                                 $wr      ?  $_port1_data :
+         $wr                  =  |cpu$_port1_en && (|cpu$_port1_index == #dmem);
+         $value[_width-1:0]   =  |cpu$_reset  ?  #dmem        :
+                                 >>1$wr      ?  |cpu>>1$_port1_data :
                                              $RETAIN;
 
       ?['']$_port2_en
-         $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
+         $$_port2_data[_width-1:0] = /xreg[|cpu$_port2_index]$value;
 
 \TLV cpu_viz(@_stage)
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['
@@ -177,21 +177,11 @@ m4+definitions(['
             // $imem_rd_addr[M4_IMEM_INDEX_CNT-1:0] = {M4_IMEM_INDEX_CNT{1'b0}};
             
             /xreg[31:0]
-               $reset               = 1'b1;
-               $rf_wr_en            = 1'b0;
-               $rf_wr_index[4:0]    = 5'b0;
-               $rf_wr_data[31:0]    = 32'b0;
-               `BOGUS_USE($reset $rf_wr_en $rf_wr_index $rf_wr_data)
                $value[31:0]         = 32'b0;
                $wr                  = 1'b0;
                `BOGUS_USE($value $wr)
                $dummy[0:0]          = 1'b0;
             /dmem[31:0]
-               $reset                  = 1'b1;
-               $dmem_wr_en             = 1'b0;
-               $dmem_wr_index[4:0]     = 5'b0;
-               $dmem_wr_data[31:0]     = 32'b0;
-               `BOGUS_USE($reset $dmem_wr_en $dmem_wr_index $dmem_wr_data)
                $value[31:0]      = 32'0;
                $wr               = 1'b0;
                `BOGUS_USE($value $wr) 
