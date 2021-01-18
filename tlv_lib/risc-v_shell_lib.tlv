@@ -61,9 +61,9 @@ m4+definitions(['
       /xreg[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
          $wr                  =  |cpu$_port1_en && (|cpu$_port1_index != 5'b0) && (|cpu$_port1_index == #xreg);
-         $value[_width-1:0]   =  |cpu$_reset ?   #xreg        :
-                                 >>1$wr         ?   |cpu>>1$_port1_data :
-                                                 $RETAIN;
+         $value[_width-1:0]   =  |cpu$_reset    ?  #xreg               :
+                                 >>1$wr         ?  |cpu>>1$_port1_data :
+                                                   $RETAIN;
 
       ?['']$_port2_en
          $$_port2_data[_width-1:0]  =  /xreg[|cpu$_port2_index]$value;
@@ -92,12 +92,12 @@ m4+definitions(['
       /dmem[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
          $wr                  =  |cpu$_port1_en && (|cpu$_port1_index == #dmem);
-         $value[_width-1:0]   =  |cpu$_reset  ?  #dmem        :
-                                 >>1$wr      ?  |cpu>>1$_port1_data :
-                                             $RETAIN;
+         $value[_width-1:0]   =  |cpu$_reset    ?  #dmem               :
+                                 >>1$wr         ?  |cpu>>1$_port1_data :
+                                                   $RETAIN;
 
       ?['']$_port2_en
-         $$_port2_data[_width-1:0] = /xreg[|cpu$_port2_index]$value;
+         $$_port2_data[_width-1:0] = /dmem[|cpu$_port2_index]$value;
 
 \TLV cpu_viz(@_stage)
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['
