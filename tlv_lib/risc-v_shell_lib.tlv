@@ -53,21 +53,23 @@ m4+definitions(['
 //          $rf_rd_data1[31:0] = /xreg[$rf_rd_index1]>>m4_stage_eval(@_wr - @_rd + 1)$value;
 //       ?$rf_rd_en2
 //          $rf_rd_data2[31:0] = /xreg[$rf_rd_index2]>>m4_stage_eval(@_wr - @_rd + 1)$value;
-//       `BOGUS_USE($rf_rd_data1 $rf_rd_data2) 
+//       `BOGUS_USE($rf_rd_data1 $rf_rd_data2)
+
 \TLV rf(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data, _port3_mode, $_port3_en, $_port3_index, $$_port3_data)
    // Reg File
    @1
       /xreg[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr    = $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #xreg);
-         $value[_width-1:0] = $_reset ? #xreg        :
-                              $wr     ? $_port1_data :
-                                        $RETAIN;
+         $wr                  =  $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #xreg);
+         $value[_width-1:0]   =  $_reset ?   #xreg        :
+                                 $wr     ?   $_port1_data :
+                                             $RETAIN;
+
       ?['']$_port2_en
-         $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
+         $$_port2_data[_width-1:0]  =  /xreg[$_port2_index]>>1$value;
 
       ?['']$_port3_en
-         $$_port3_data[_width-1:0] = /xreg[$_port3_index]>>1$value;
+         $$_port3_data[_width-1:0]  =  /xreg[$_port3_index]>>1$value;
 
 
 // A data memory in |cpu at the given stage. Reads and writes in the same stage, where reads are of the data written by the previous transaction.
@@ -83,15 +85,17 @@ m4+definitions(['
 //       ?$dmem_rd_en
 //          $dmem_rd_data[31:0] = /dmem[$dmem_addr]>>1$value;
 //       `BOGUS_USE($dmem_rd_data)
+
 \TLV dmem(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data)
    // Reg File
    @1
       /dmem[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr    = $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #xreg);
-         $value[_width-1:0] = $_reset ? #xreg        :
-                              $wr     ? $_port1_data :
-                                        $RETAIN;
+         $wr                  =  $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #dmem);
+         $value[_width-1:0]   =  $_reset  ?  #dmem        :
+                                 $wr      ?  $_port1_data :
+                                             $RETAIN;
+                                             
       ?['']$_port2_en
          $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
 
