@@ -91,11 +91,11 @@ m4+definitions(['
    @1
       /dmem[_entries-1:0]
          //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr                  =  $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #dmem);
+         $wr                  =  $_port1_en && ($_port1_index == #dmem);
          $value[_width-1:0]   =  $_reset  ?  #dmem        :
                                  $wr      ?  $_port1_data :
                                              $RETAIN;
-                                             
+
       ?['']$_port2_en
          $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
 
