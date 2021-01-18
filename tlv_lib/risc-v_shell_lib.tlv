@@ -71,18 +71,29 @@ m4+definitions(['
 
 
 // A data memory in |cpu at the given stage. Reads and writes in the same stage, where reads are of the data written by the previous transaction.
-\TLV dmem(@_stage)
-   // Data Memory
-   @_stage
-      /dmem[15:0]
-         $wr = |cpu$dmem_wr_en && (|cpu$dmem_addr == #dmem);
-         $value[31:0] = |cpu$reset ?   #dmem :
-                        $wr        ?   |cpu$dmem_wr_data :
-                                       $RETAIN;
+// \TLV dmem(@_stage)
+//    // Data Memory
+//    @_stage
+//       /dmem[15:0]
+//          $wr = |cpu$dmem_wr_en && (|cpu$dmem_addr == #dmem);
+//          $value[31:0] = |cpu$reset ?   #dmem :
+//                         $wr        ?   |cpu$dmem_wr_data :
+//                                        $RETAIN;
                                   
-      ?$dmem_rd_en
-         $dmem_rd_data[31:0] = /dmem[$dmem_addr]>>1$value;
-      `BOGUS_USE($dmem_rd_data)
+//       ?$dmem_rd_en
+//          $dmem_rd_data[31:0] = /dmem[$dmem_addr]>>1$value;
+//       `BOGUS_USE($dmem_rd_data)
+\TLV dmem(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data)
+   // Reg File
+   @1
+      /dmem[_entries-1:0]
+         //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
+         $wr    = $_port1_en && ($_port1_index != 5'b0) && ($_port1_index == #xreg);
+         $value[_width-1:0] = $_reset ? #xreg        :
+                              $wr     ? $_port1_data :
+                                        $RETAIN;
+      ?['']$_port2_en
+         $$_port2_data[_width-1:0] = /xreg[$_port2_index]>>1$value;
 
 \TLV cpu_viz(@_stage)
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['
@@ -162,16 +173,21 @@ m4+definitions(['
             // $imem_rd_addr[M4_IMEM_INDEX_CNT-1:0] = {M4_IMEM_INDEX_CNT{1'b0}};
             
             /xreg[31:0]
-               $reset            = 1'b1;
-               $wr_en            = 1'b0;
-               $wr_index[4:0]    = 5'b0;
-               $wr_data[31:0]    = 32'b0;
-               `BOGUS_USE($reset $wr_en $wr_index $wr_data)
-               $value[31:0]      = 32'b0;
-               $wr               = 1'b0;
+               $reset               = 1'b1;
+               $rf_wr_en            = 1'b0;
+               $rf_wr_index[4:0]    = 5'b0;
+               $rf_wr_data[31:0]    = 32'b0;
+               `BOGUS_USE($reset $rf_wr_en $rf_wr_index $rf_wr_data)
+               $value[31:0]         = 32'b0;
+               $wr                  = 1'b0;
                `BOGUS_USE($value $wr)
-               $dummy[0:0]       = 1'b0;
-            /dmem[15:0]
+               $dummy[0:0]          = 1'b0;
+            /dmem[31:0]
+               $reset                  = 1'b1;
+               $dmem_wr_en             = 1'b0;
+               $dmem_wr_index[4:0]     = 5'b0;
+               $dmem_wr_data[31:0]     = 32'b0;
+               `BOGUS_USE($reset $dmem_wr_en $dmem_wr_index $dmem_wr_data)
                $value[31:0]      = 32'0;
                $wr               = 1'b0;
                `BOGUS_USE($value $wr) 
@@ -193,7 +209,7 @@ m4+definitions(['
             $ANY = /top|cpu/xreg<>0$ANY;
             `BOGUS_USE($dummy)
          
-         /dmem[15:0]
+         /dmem[31:0]
             $ANY = /top|cpu/dmem<>0$ANY;
             `BOGUS_USE($dummy)
 
@@ -288,7 +304,7 @@ m4+definitions(['
          //
          // DMem
          //
-         /dmem[15:0]
+         /dmem[31:0]
             \viz_alpha
                initEach: function() {
                   let memname = new fabric.Text("Mini DMem", {
