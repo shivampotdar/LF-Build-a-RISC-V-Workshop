@@ -63,8 +63,8 @@
    //  o data memory
    //  o CPU visualization
    |cpu
-      m4+rf(32, 32, $reset, W, $wr_en, $wr_index, $wr_data, R, $rd_en1, $rd_index1, $rd_data1, R, $rd_en2, $rd_index2, $rd_data2)
-      //m4+dmem(@4)    // Args: (read/write stage)
+      //m4+rf(32, 32, $reset, W, $wr_en, $wr_index, $wr_data, R, $rd_en1, $rd_index1, $rd_data1, R, $rd_en2, $rd_index2, $rd_data2)
+      //m4+dmem(32, 32, $reset, W, $is_s_instr, $result[6:2], $src2_value, R, $is_load, $result[6:2], $$ld_data[31:0])
    
    //m4+cpu_viz(@4)    // For visualisation, argument should be at least equal to the last stage of CPU logic
                        // @4 would work for all labs
