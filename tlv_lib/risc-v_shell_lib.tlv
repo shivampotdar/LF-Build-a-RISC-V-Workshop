@@ -57,19 +57,23 @@ m4+definitions(['
 
 \TLV rf(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data, _port3_mode, $_port3_en, $_port3_index, $$_port3_data)
    // Reg File
-   @1
-      /xreg[_entries-1:0]
-         //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr                  =  |cpu$_port1_en && (|cpu$_port1_index != 5'b0) && (|cpu$_port1_index == #xreg);
-         $value[_width-1:0]   =  |cpu$_reset    ?  #xreg               :
-                                 >>1$wr         ?  |cpu>>1$_port1_data :
-                                                   $RETAIN;
+   //@1
+   /xreg[_entries-1:0]
+      /* m4_argn(4, $@) */
+      // m4_shift -> 
+      // Read generic // 
+      /* m4_forloop(['m4_regport_loop'], 1, 4, ['m4_argn(m4_eval(1 + m4_regport_loop * 4), $@)'])*/
+      //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
+      $wr                  =  /top$_port1_en && (/top$_port1_index != 5'b0) && (/top$_port1_index == #xreg);
+      $value[_width-1:0]   =  /top$_reset    ?  #xreg               :
+                              >>1$wr         ?  >>1/top$_port1_data :
+                                                $RETAIN;
 
-      ?['']$_port2_en
-         $$_port2_data[_width-1:0]  =  /xreg[|cpu$_port2_index]$value;
+   //?['']$_port2_en
+   $$_port2_data[_width-1:0]  =  /xreg[/top$_port2_index]$value;
 
-      ?['']$_port3_en
-         $$_port3_data[_width-1:0]  =  /xreg[|cpu$_port3_index]$value;
+   //?['']$_port3_en
+   $$_port3_data[_width-1:0]  =  /xreg[/top$_port3_index]$value;
 
 
 // A data memory in |cpu at the given stage. Reads and writes in the same stage, where reads are of the data written by the previous transaction.
@@ -88,16 +92,16 @@ m4+definitions(['
 
 \TLV dmem(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data)
    // Reg File
-   @1
-      /dmem[_entries-1:0]
-         //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
-         $wr                  =  |cpu$_port1_en && (|cpu$_port1_index == #dmem);
-         $value[_width-1:0]   =  |cpu$_reset    ?  #dmem               :
-                                 >>1$wr         ?  |cpu>>1$_port1_data :
-                                                   $RETAIN;
+   //@1
+   /dmem[_entries-1:0]
+      //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
+      $wr                  =  /top$_port1_en && (/top$_port1_index == #dmem);
+      $value[_width-1:0]   =  /top$_reset    ?  #dmem               :
+                              >>1$wr         ?  >>1/top$_port1_data :
+                                                $RETAIN;
 
-      ?['']$_port2_en
-         $$_port2_data[_width-1:0] = /dmem[|cpu$_port2_index]$value;
+   //?['']$_port2_en
+   $$_port2_data[_width-1:0] = /dmem[/top$_port2_index]$value;
 
 \TLV cpu_viz(@_stage)
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['
@@ -210,6 +214,29 @@ m4+definitions(['
          // m4_mnemonic_expr is build for WARP-V signal names, which are slightly different. Correct them.
          m4_define(['m4_modified_mnemonic_expr'], ['m4_patsubst(m4_mnemonic_expr, ['_instr'], [''])'])
          $mnemonic[10*8-1:0] = m4_modified_mnemonic_expr $is_load ? "LOAD      " : $is_store ? "STORE     " : "ILLEGAL   ";
+
+         /dummy      // SVSigRef syntax
+            \viz_alpha
+               initEach: function() {
+                  debugger;
+                  let cycCntText = new fabric.Text("",
+                                    {  top: 0,
+                                       left: 0,
+                                       fontFamily: "monospace",
+                                       fontSize: 20
+                                    });
+                  global.canvas.add(cycCntText);
+                  return {cycCntText};
+               },
+               renderEach: function() {
+                  debugger;
+                  if(this.svSigRef(`ld_data`, 0)){
+                  let cycCnt = this.svSigRef(`something`, 0).asInt();
+                  let cycCntStr = cycCnt.toString();
+                  this.fromInit().cycCntText.setText(cycCntStr);}
+                  else console.log(this.svSigRef(`CPU_Dmem_value_a4(3)`,0).asInt());
+               }
+         
          \viz_alpha
             //
             renderEach: function() {
@@ -246,7 +273,7 @@ m4+definitions(['
                   return valid ? `r${regNum} (${regValue})` : `rX`;
                };
                let immStr = (valid, immValue) => {
-                  return valid ? `i[${immValue}]` : `No Imm`;
+                  return valid ? `i[${immValue}]` : ``;
                }
                let srcStr = ($src, $valid, $reg, $value) => {
                   return $valid.asBool(false)
