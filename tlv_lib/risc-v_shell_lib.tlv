@@ -66,8 +66,8 @@ m4+definitions(['
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index != 5'b0) && (/top$_port1_index == #xreg);
       $value[_width-1:0]   =  /top$_reset    ?     #xreg               :
-                              >>1$wr         ?     >>1/top$_port1_data :
-                                                   $RETAIN;
+                           >>1$wr         ?     >>1/top$_port1_data :
+                                                $RETAIN;
 
    //?['']$_port2_en
    $$_port2_data[_width-1:0]  =  /xreg[/top$_port2_index]$value;
@@ -97,8 +97,8 @@ m4+definitions(['
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index == #dmem);
       $value[_width-1:0]   =  /top$_reset    ?     #dmem               :
-                              >>1$wr         ?     >>1/top$_port1_data :
-                                                   $RETAIN;
+                           >>1$wr         ?     >>1/top$_port1_data :
+                                                $RETAIN;
 
    //?['']$_port2_en
    $$_port2_data[_width-1:0] = /dmem[/top$_port2_index]$value;
