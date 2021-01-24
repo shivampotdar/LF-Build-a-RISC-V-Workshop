@@ -39,33 +39,27 @@ m4+definitions(['
    '])
 
 \TLV rf(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data, _port3_mode, $_port3_en, $_port3_index, $$_port3_data)
-   // Reg File
    /xreg[_entries-1:0]
       /* m4_argn(4, $@) */
-      // m4_shift -> 
-      // Read generic // 
       /* m4_forloop(['m4_regport_loop'], 1, 4, ['m4_argn(m4_eval(1 + m4_regport_loop * 4), $@)'])*/
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index != 5'b0) && (/top$_port1_index == #xreg);
       $value[_width-1:0]   =  /top$_reset    ?  #xreg               :   
                               >>1$wr         ?  >>1/top$_port1_data :   
-                                                $RETAIN;
+                                                $RETAIN;   
    
-   //?['']$_port2_en
-   $$_port2_data[_width-1:0]  =  /xreg[/top$_port2_index]$value;
-   $$_port3_data[_width-1:0]  =  /xreg[/top$_port3_index]$value;
+   $$_port2_data[_width-1:0]  =  $_port2_en ? /xreg[/top$_port2_index]$value : 'X;
+   $$_port3_data[_width-1:0]  =  $_port3_en ? /xreg[/top$_port3_index]$value : 'X;
    
    /cpuviz
       $rf_rd_en1 = /top$_port2_en;
       $rf_rd_en2 = /top$_port3_en;
-      $rf_rd_index1[4:0] = /top$_port2_index;
-      $rf_rd_index2[4:0] = /top$_port3_index;
-      $rf_wr_index[4:0]  = /top$_port1_index;
+      $rf_rd_index1[\$clog2(_entries)-1:0] = /top$_port2_index;
+      $rf_rd_index2[\$clog2(_entries)-1:0] = /top$_port3_index;
+      $rf_wr_index[\$clog2(_entries)-1:0]  = /top$_port1_index;
       $rf_wr_en = /top$_port1_en;
 
 \TLV dmem(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data)
-   // Reg File
-   //@1
    /dmem[_entries-1:0]
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index == #dmem);
@@ -73,8 +67,14 @@ m4+definitions(['
                               >>1$wr         ?     >>1/top$_port1_data :   
                                                    $RETAIN;
    
-   //?['']$_port2_en
-   $$_port2_data[_width-1:0] = /dmem[/top$_port2_index]$value;
+   $$_port2_data[_width-1:0] = $_port2_en ? /dmem[/top$_port2_index]$value : 'X;
+   
+   /cpuviz
+      $dmem_rd_en = /top$_port2_en;
+      $dmem_rd_index[\$clog2(_entries)-1:0] = /top$_port2_index;
+      $dmem_wr_en = /top$_port1_en;
+      $dmem_wr_index[\$clog2(_entries)-1:0] = /top$_port1_index;
+      
 
 \TLV cpu_viz()
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['
@@ -84,17 +84,6 @@ m4+definitions(['
       assign instr_strs = '{m4_asm_mem_expr "END                                     "};
    
    /cpuviz
-      /defaults
-         /xreg[31:0]
-            $value[31:0]         = 32'b0;
-            $wr                  = 1'b0;
-            `BOGUS_USE($value $wr)
-            $dummy[0:0]          = 1'b0;
-         /dmem[31:0]
-            $value[31:0]      = 32'0;
-            $wr               = 1'b0;
-            `BOGUS_USE($value $wr)
-            $dummy[0:0]       = 1'b0;
       
       $fetch_instr_str[40*8-1:0] = *instr_strs\[/top$pc[\$clog2(M4_NUM_INSTRS+1)+1:2]\];
       
@@ -121,14 +110,30 @@ m4+definitions(['
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let dmem_header = new fabric.Text("Data. Memory", {
+            let dmem_header = new fabric.Text("Data Memory", {
                   top: -29 - 40,
                   left: 450,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            return {objects: {imem_header, decode_header, rf_header, dmem_header}};
+            let error_header = new fabric.Text("⚠ Missing Signals", {
+                  top: 350,
+                  left: -440,
+                  fontSize: 18,
+                  fontWeight: 800,
+                  fill: "red",
+                  fontFamily: "monospace"
+               })
+            let error_box   = new fabric.Rect({
+                  top: 400,
+                  left: -500,
+                  fill: "#ffffe0",
+                  width: 400,
+                  height: 300,
+                  stroke: "black"
+               })
+            return {objects: {imem_header, decode_header, rf_header, dmem_header, error_header, error_box}};
          },
          renderEach: function() {
             //debugger
@@ -151,7 +156,7 @@ m4+definitions(['
             
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
-                                            
+            
             let pcPointer = new fabric.Text("->", {
                top: 18 * (pc.asInt() / 4),
                left: -295,
@@ -177,6 +182,16 @@ m4+definitions(['
                stroke: "#d0d0ff",
                strokeWidth: 3,
                visible: '$rf_wr_en'.asBool()
+            })
+            let ld_arrow = new fabric.Line([470, 18 * '$dmem_rd_index'.asInt() + 6 - 40, 370, 18 * '$rf_wr_index'.asInt() + 6 - 40], {
+               stroke: "#d0d0ff",
+               strokeWidth: 3,
+               visible: '$dmem_rd_en'.asBool()
+            })
+            let st_arrow = new fabric.Line([470, 18 * '$dmem_wr_index'.asInt() + 6 - 40, 370, 18 * '$rf_rd_index1'.asInt() + 6 - 40], {
+               stroke: "#d0d0ff",
+               strokeWidth: 3,
+               visible: '$dmem_wr_en'.asBool()
             })
             //
             // Fetch Instruction
@@ -281,12 +296,13 @@ m4+definitions(['
                   })
                }, 1000)
             }
+            //let load_viz = new fabric.Text('$dmem_rd_data'.asInt(0).toString(), {
+            //   left: 
             
-            return {objects: [pcPointer, pc_arrow, rs1_arrow, rs2_arrow, rd_arrow, instrWithValues, fetch_instr_viz, src1_value_viz, src2_value_viz, result_shadow, result_viz]};
+            
+            return {objects: [pcPointer, pc_arrow, rs1_arrow, rs2_arrow, rd_arrow, instrWithValues, fetch_instr_viz, src1_value_viz, src2_value_viz, result_shadow, result_viz, ld_arrow, st_arrow]};
          }
-      m4_define(M4_COMMENT, 1)
       
-      //
       /imem[m4_eval(M4_NUM_INSTRS-1):0]  // TODO: Cleanly report non-integer ranges.
          $rd_viz = !/top$reset && /top$pc[4:2] == #imem;
          $instr[31:0] = *instrs\[#imem\];
@@ -324,7 +340,6 @@ m4+definitions(['
                this.getInitObject("disassembled").set({textBackgroundColor: '$rd_viz'.asBool() ? "#b0ffff" : "white"})
             }
       
-      //
       /xreg[31:0]
          $ANY = /top/xreg<>0$ANY;
          $rd = (/cpuviz$rf_rd_en1 && /cpuviz$rf_rd_index1 == #xreg) ||
@@ -357,66 +372,36 @@ m4+definitions(['
                }
                return {objects: [reg_str]}
             }
-
-      // Register file
-      //
-      m4_ifelse(M4_COMMENT, 0, ['
-      /xreg[31:0]
+         
+      /dmem[31:0]
+         $ANY = /top/dmem<>0$ANY;
+         $rd = (/cpuviz$dmem_rd_en && /cpuviz$dmem_rd_index == #dmem);
          \viz_alpha
             initEach: function() {
-               let regname = new fabric.Text("Reg File", {
-                     top: -20,
-                     left: 367,
-                     fontSize: 14,
-                     fontFamily: "monospace"
-                  });
-               let reg = new fabric.Text("", {
-                  top: 18 * this.getIndex(),
-                  left: 375,
-                  fontSize: 14,
-                  fontFamily: "monospace"
-               });
-               return {objects: {regname: regname, reg: reg}};
+               return {}  // {objects: {reg: reg}};
             },
             renderEach: function() {
+               let rd = '$rd'.asBool(false);
                let mod = '$wr'.asBool(false);
                let reg = parseInt(this.getIndex());
-               let regIdent = reg.toString();
-               let oldValStr = mod ? `(${'>>1$value'.asInt(NaN).toString()})` : "";
-               this.getInitObject("reg").setText(
-                  regIdent + ": " +
-                  '$value'.asInt(NaN).toString() + oldValStr);
-               this.getInitObject("reg").setFill(mod ? "blue" : "black");
-            }
-      //
-      // DMem
-      //
-      /dmem[31:0]
-         \viz_alpha
-            initEach: function() {
-               let memname = new fabric.Text("Mini DMem", {
-                     top: -20,
-                     left: 460,
-                     fontSize: 14,
-                     fontFamily: "monospace"
-                  });
-               let mem = new fabric.Text("", {
-                  top: 18 * this.getIndex(),
-                  left: 468,
+               let regIdent = reg.toString().padEnd(2, " ");
+               let newValStr = regIdent + ": " + (mod ? '$value'.asInt(NaN).toString() : "");
+               let dmem_str = new fabric.Text(regIdent + ": " + '>>1$value'.asInt(NaN).toString(), {
+                  top: 18 * this.getIndex() - 40,
+                  left: 480,
                   fontSize: 14,
-                  fontFamily: "monospace"
-               });
-               return {objects: {memname: memname, mem: mem}};
-            },
-            renderEach: function() {
-               let mod = '$wr'.asBool(false);
-               let mem = parseInt(this.getIndex());
-               let memIdent = mem.toString();
-               let oldValStr = mod ? `(${'>>1$value'.asInt(NaN).toString()})` : "";
-               this.getInitObject("mem").setText(
-                  memIdent + ": " +
-                  '$value'.asInt(NaN).toString() + oldValStr);
-               this.getInitObject("mem").setFill(mod ? "blue" : "black");
+                  fill: mod ? "blue" : "black",
+                  fontWeight: mod ? 1000 : 400,
+                  fontFamily: "monospace",
+                  textBackgroundColor: rd ? "#b0ffff" : null
+               })
+               if (mod) {
+                  setTimeout(() => {
+                     console.log(`Reg ${this.getIndex()} written with: ${newValStr}.`)
+                     dmem_str.set({text: newValStr, dirty: true})
+                     this.global.canvas.renderAll()
+                  }, 1500)
+               }
+               return {objects: [dmem_str]}
             }
-      '])
    '])
