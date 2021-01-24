@@ -36,7 +36,7 @@ m4+definitions(['
       `define READONLY_MEM(ADDR, DATA) assign DATA = instrs[ADDR[\$clog2(\$size(instrs)) + 1 : 2]];         // Verilog macro for use by students
       assign instrs = '{
          m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
-      };    
+      };
 
 // A 2-rd 1-wr register file in |cpu that reads and writes in the given stages. If read/write stages are equal, the read values reflect previous writes.
 // Reads earlier than writes will require bypass.
@@ -65,8 +65,8 @@ m4+definitions(['
       /* m4_forloop(['m4_regport_loop'], 1, 4, ['m4_argn(m4_eval(1 + m4_regport_loop * 4), $@)'])*/
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index != 5'b0) && (/top$_port1_index == #xreg);
-      $value[_width-1:0]   =  /top$_reset    ?  #xreg               :
-                              >>1$wr         ?  >>1/top$_port1_data :
+      $value[_width-1:0]   =  /top$_reset    ?  #xreg               :   
+                              >>1$wr         ?  >>1/top$_port1_data :   
                                                 $RETAIN;
 
    //?['']$_port2_en
@@ -85,7 +85,6 @@ m4+definitions(['
 //          $value[31:0] = |cpu$reset ?   #dmem :
 //                         $wr        ?   |cpu$dmem_wr_data :
 //                                        $RETAIN;
-                                  
 //       ?$dmem_rd_en
 //          $dmem_rd_data[31:0] = /dmem[$dmem_addr]>>1$value;
 //       `BOGUS_USE($dmem_rd_data)
@@ -96,9 +95,9 @@ m4+definitions(['
    /dmem[_entries-1:0]
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index == #dmem);
-      $value[_width-1:0]   =  /top$_reset    ?     #dmem               :
-                           >>1$wr         ?     >>1/top$_port1_data :
-                                                $RETAIN;
+      $value[_width-1:0]   =  /top$_reset    ?     #dmem               :   
+                              >>1$wr         ?     >>1/top$_port1_data :   
+                                                   $RETAIN;
 
    //?['']$_port2_en
    $$_port2_data[_width-1:0] = /dmem[/top$_port2_index]$value;
@@ -186,7 +185,7 @@ m4+definitions(['
          /dmem[31:0]
             $value[31:0]      = 32'0;
             $wr               = 1'b0;
-            `BOGUS_USE($value $wr) 
+            `BOGUS_USE($value $wr)
             $dummy[0:0]       = 1'b0;
          `BOGUS_USE($is_lui $is_auipc $is_jal $is_jalr $is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_lb $is_lh $is_lw $is_lbu $is_lhu $is_sb $is_sh $is_sw)
          `BOGUS_USE($is_addi $is_slti $is_sltiu $is_xori $is_ori $is_andi $is_slli $is_srli $is_srai $is_add $is_sub $is_sll $is_slt $is_sltu $is_xor)
@@ -233,21 +232,34 @@ m4+definitions(['
                let cycCnt = this.svSigRef(`something`, 0).asInt();
                let cycCntStr = cycCnt.toString();
                this.fromInit().cycCntText.setText(cycCntStr);}
-               else console.log(this.svSigRef(`CPU_Dmem_value_a4(3)`,0).asInt());
+               else console.log(this.svSigRef(`Dmem_value_a0(3)`,0).asInt());
             }
 
       \viz_alpha
-         //
          renderEach: function() {
             debugger;
             //
             // PC instr_mem pointer
             //
-            let $pc = '$pc';
+            let pc       = this.svSigRef(`L0_pc_a0`);
+            let rd_valid = this.svSigRef(`L0_rd_valid_a0`);
+            let rd       = this.svSigRef(`L0_rd_a0`);
+            let result   = this.svSigRef(`L0_result_a0`);
+            let src1_value = this.svSigRef(`L0_src1_value_a0`);
+            let src2_value = this.svSigRef(`L0_src2_value_a0`);
+            let imm = this.svSigRef(`L0_imm_a0`);
+            let imm_valid = this.svSigRef(`L0_imm_valid_a0`);
+            let rs1      = this.svSigRef(`L0_rs1_a0`);
+            let rs2      = this.svSigRef(`L0_rs2_a0`);
+            let rs1_valid      = this.svSigRef(`L0_rs1_valid_a0`);
+            let rs2_valid      = this.svSigRef(`L0_rs2_valid_a0`);
+            
+            
+            
             let color = !('$valid'.asBool()) ? "gray" :
                                                "blue";
             let pcPointer = new fabric.Text("->", {
-               top: 18 * ($pc.asInt() / 4),
+               top: 18 * (pc.asInt() / 4),
                left: -600,
                fill: color,
                fontSize: 14,
@@ -279,9 +291,10 @@ m4+definitions(['
                           ? `\n      ${regStr(true, $reg.asInt(NaN), $value.asInt(NaN))}`
                           : "";
             };
-            let str = `${regStr('$rd_valid'.asBool(false), '$rd'.asInt(NaN), '$result'.asInt(NaN))}\n` +
-                      `  = ${'$mnemonic'.asString()}${srcStr(1, '$rs1_valid', '$rs1', '$src1_value')}${srcStr(2, '$rs2_valid', '$rs2', '$src2_value')}\n` +
-                      `      ${immStr('$imm_valid'.asBool(false), '$imm'.asInt(NaN))}`;
+            
+            let str = `${regStr(rd_valid.asBool(false), rd.asInt(NaN), result.asInt(NaN))}\n` +
+                      `  = ${'$mnemonic'.asString()}${srcStr(1, rs1_valid, rs1, src1_value)}${srcStr(2, rs2_valid, rs2, src2_value)}\n` +
+                      `      ${immStr(imm_valid.asBool(false), imm.asInt(NaN))}`;
             let instrWithValues = new fabric.Text(str, {
                top: 70,
                left: 90,
@@ -294,7 +307,7 @@ m4+definitions(['
       //
       // Register file
       //
-      /xreg[31:0]           
+      /xreg[31:0]
          \viz_alpha
             initEach: function() {
                let regname = new fabric.Text("Reg File", {
