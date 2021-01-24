@@ -37,6 +37,21 @@ m4+definitions(['
       assign instrs = '{
          m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
       };
+   m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['   
+   /defaults
+      {$is_lui, $is_auipc, $is_jal, $is_jalr, $is_beq, $is_bne, $is_blt, $is_bge, $is_bltu, $is_bgeu, $is_lb, $is_lh, $is_lw, $is_lbu, $is_lhu, $is_sb, $is_sh, $is_sw} = '0;
+      {$is_addi, $is_slti, $is_sltiu, $is_xori, $is_ori, $is_andi, $is_slli, $is_srli, $is_srai, $is_add, $is_sub, $is_sll, $is_slt, $is_sltu, $is_xor} = '0;
+      {$is_srl, $is_sra, $is_or, $is_and, $is_csrrw, $is_csrrs, $is_csrrc, $is_csrrwi, $is_csrrsi, $is_csrrci} = '0;
+      {$is_load, $is_store} = '0;
+      `BOGUS_USE($is_lui $is_auipc $is_jal $is_jalr $is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_lb $is_lh $is_lw $is_lbu $is_lhu $is_sb $is_sh $is_sw)
+      `BOGUS_USE($is_addi $is_slti $is_sltiu $is_xori $is_ori $is_andi $is_slli $is_srli $is_srai $is_add $is_sub $is_sll $is_slt $is_sltu $is_xor)
+      `BOGUS_USE($is_srl $is_sra $is_or $is_and $is_csrrw $is_csrrs $is_csrrc $is_csrrwi $is_csrrsi $is_csrrci)
+   
+   $ANY = /defaults<>0$ANY;
+   
+   m4_define(['m4_modified_mnemonic_expr'], ['m4_patsubst(m4_mnemonic_expr, ['_instr'], [''])'])
+   $mnemonic[10*8-1:0] = m4_modified_mnemonic_expr $is_load ? "LOAD      " : $is_store ? "STORE     " : "ILLEGAL   ";
+   '])
 
 // A 2-rd 1-wr register file in |cpu that reads and writes in the given stages. If read/write stages are equal, the read values reflect previous writes.
 // Reads earlier than writes will require bypass.
@@ -107,8 +122,6 @@ m4+definitions(['
    
    // for pulling default viz signals into CPU
    // and then back into viz
-   $ANY = /top/cpuviz/defaults<>0$ANY;
-   `BOGUS_USE($dummy)
    /xreg[31:0]
       $ANY = /top/cpuviz/defaults/xreg<>0$ANY;
    /dmem[31:0]
@@ -143,28 +156,6 @@ m4+definitions(['
 
 
       /defaults
-         {$is_lui, $is_auipc, $is_jal, $is_jalr, $is_beq, $is_bne, $is_blt, $is_bge, $is_bltu, $is_bgeu, $is_lb, $is_lh, $is_lw, $is_lbu, $is_lhu, $is_sb, $is_sh, $is_sw} = '0;
-         {$is_addi, $is_slti, $is_sltiu, $is_xori, $is_ori, $is_andi, $is_slli, $is_srli, $is_srai, $is_add, $is_sub, $is_sll, $is_slt, $is_sltu, $is_xor} = '0;
-         {$is_srl, $is_sra, $is_or, $is_and, $is_csrrw, $is_csrrs, $is_csrrc, $is_csrrwi, $is_csrrsi, $is_csrrci} = '0;
-         {$is_load, $is_store} = '0;
-
-         $valid               = 1'b1;
-         $rd[4:0]             = 5'b0;
-         $rs1[4:0]            = 5'b0;
-         $rs2[4:0]            = 5'b0;
-         $src1_value[31:0]    = 32'b0;
-         $src2_value[31:0]    = 32'b0;
-
-         $result[31:0]        = 32'b0;
-         $pc[31:0]            = 32'b0;
-         $imm[31:0]           = 32'b0;
-
-         $is_s_instr          = 1'b0;
-
-         $rd_valid            = 1'b0;
-         $rs1_valid           = 1'b0;
-         $rs2_valid           = 1'b0;
-         $imm_valid           = 1'b0;
          // $rf_wr_en            = 1'b0;
          // $rf_wr_index[4:0]    = 5'b0;
          // $rf_wr_data[31:0]    = 32'b0;
@@ -173,7 +164,6 @@ m4+definitions(['
          // $rf_rd_index1[4:0]   = 5'b0;
          // $rf_rd_index2[4:0]   = 5'b0;
 
-         $ld_data[31:0]       = 32'b0;
          // $imem_rd_en          = 1'b0;
          // $imem_rd_addr[M4_IMEM_INDEX_CNT-1:0] = {M4_IMEM_INDEX_CNT{1'b0}};
 
@@ -187,19 +177,8 @@ m4+definitions(['
             $wr               = 1'b0;
             `BOGUS_USE($value $wr)
             $dummy[0:0]       = 1'b0;
-         `BOGUS_USE($is_lui $is_auipc $is_jal $is_jalr $is_beq $is_bne $is_blt $is_bge $is_bltu $is_bgeu $is_lb $is_lh $is_lw $is_lbu $is_lhu $is_sb $is_sh $is_sw)
-         `BOGUS_USE($is_addi $is_slti $is_sltiu $is_xori $is_ori $is_andi $is_slli $is_srli $is_srai $is_add $is_sub $is_sll $is_slt $is_sltu $is_xor)
-         `BOGUS_USE($is_srl $is_sra $is_or $is_and $is_csrrw $is_csrrs $is_csrrc $is_csrrwi $is_csrrsi $is_csrrci)
-         `BOGUS_USE($is_load $is_store)
-         `BOGUS_USE($valid $rd $rs1 $rs2 $src1_value $src2_value $result $pc $imm)
-         `BOGUS_USE($is_s_instr $rd_valid $rs1_valid $rs2_valid $imm_valid)
+         //`BOGUS_USE($is_s_instr)
          // `BOGUS_USE($rf_wr_en $rf_wr_index $rf_wr_data $rf_rd_en1 $rf_rd_en2 $rf_rd_index1 $rf_rd_index2 $ld_data)
-         `BOGUS_USE($ld_data)
-
-         $dummy[0:0]          = 1'b0;
-
-
-      $ANY = /top<>0$ANY;
 
       /xreg[31:0]
          $ANY = /top/xreg<>0$ANY;
@@ -208,10 +187,6 @@ m4+definitions(['
       /dmem[31:0]
          $ANY = /top/dmem<>0$ANY;
          `BOGUS_USE($dummy)
-
-      // m4_mnemonic_expr is build for WARP-V signal names, which are slightly different. Correct them.
-      m4_define(['m4_modified_mnemonic_expr'], ['m4_patsubst(m4_mnemonic_expr, ['_instr'], [''])'])
-      $mnemonic[10*8-1:0] = m4_modified_mnemonic_expr $is_load ? "LOAD      " : $is_store ? "STORE     " : "ILLEGAL   ";
 
       /dummy      // SVSigRef syntax
          \viz_alpha
@@ -253,10 +228,13 @@ m4+definitions(['
             let rs2      = this.svSigRef(`L0_rs2_a0`);
             let rs1_valid      = this.svSigRef(`L0_rs1_valid_a0`);
             let rs2_valid      = this.svSigRef(`L0_rs2_valid_a0`);
+            let valid    = this.svSigRef(`L0_valid_a0`);
+            let mnemonic    = this.svSigRef(`L0_mnemonic_a0`);
             
             
             
-            let color = !('$valid'.asBool()) ? "gray" :
+            
+            let color = !(valid.asBool()) ? "gray" :
                                                "blue";
             let pcPointer = new fabric.Text("->", {
                top: 18 * (pc.asInt() / 4),
@@ -293,7 +271,7 @@ m4+definitions(['
             };
             
             let str = `${regStr(rd_valid.asBool(false), rd.asInt(NaN), result.asInt(NaN))}\n` +
-                      `  = ${'$mnemonic'.asString()}${srcStr(1, rs1_valid, rs1, src1_value)}${srcStr(2, rs2_valid, rs2, src2_value)}\n` +
+                      `  = ${mnemonic.asString()}${srcStr(1, rs1_valid, rs1, src1_value)}${srcStr(2, rs2_valid, rs2, src2_value)}\n` +
                       `      ${immStr(imm_valid.asBool(false), imm.asInt(NaN))}`;
             let instrWithValues = new fabric.Text(str, {
                top: 70,
