@@ -19,6 +19,8 @@ m4+definitions(['
       assign instrs = '{
          m4_instr0['']m4_forloop(['m4_instr_ind'], 1, M4_NUM_INSTRS, [', m4_echo(['m4_instr']m4_instr_ind)'])
       };
+   
+   // mnemonic from warp-v lib expects all is_* to be defined
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['   
    /defaults
       {$is_lui, $is_auipc, $is_jal, $is_jalr, $is_beq, $is_bne, $is_blt, $is_bge, $is_bltu, $is_bgeu, $is_lb, $is_lh, $is_lw, $is_lbu, $is_lhu, $is_sb, $is_sh, $is_sw} = '0;
@@ -36,26 +38,8 @@ m4+definitions(['
    `BOGUS_USE($mnemonic);
    '])
 
-// A 2-rd 1-wr register file in |cpu that reads and writes in the given stages. If read/write stages are equal, the read values reflect previous writes.
-// Reads earlier than writes will require bypass.
-// \TLV rf(@_rd, @_wr)
-//    // Reg File
-//    @_wr
-//       /xreg[31:0]
-//          $wr = |cpu$rf_wr_en && (|cpu$rf_wr_index != 5'b0) && (|cpu$rf_wr_index == #xreg);
-//          $value[31:0] = |cpu$reset ?   #xreg           :
-//                         $wr        ?   |cpu$rf_wr_data :
-//                                        $RETAIN;
-//    @_rd
-//       ?$rf_rd_en1
-//          $rf_rd_data1[31:0] = /xreg[$rf_rd_index1]>>m4_stage_eval(@_wr - @_rd + 1)$value;
-//       ?$rf_rd_en2
-//          $rf_rd_data2[31:0] = /xreg[$rf_rd_index2]>>m4_stage_eval(@_wr - @_rd + 1)$value;
-//       `BOGUS_USE($rf_rd_data1 $rf_rd_data2)
-
 \TLV rf(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data, _port3_mode, $_port3_en, $_port3_index, $$_port3_data)
    // Reg File
-   //@1
    /xreg[_entries-1:0]
       /* m4_argn(4, $@) */
       // m4_shift -> 
@@ -63,9 +47,14 @@ m4+definitions(['
       /* m4_forloop(['m4_regport_loop'], 1, 4, ['m4_argn(m4_eval(1 + m4_regport_loop * 4), $@)'])*/
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index != 5'b0) && (/top$_port1_index == #xreg);
-      $value[_width-1:0]   =  /top$_reset    ?  '0               :   
+      $value[_width-1:0]   =  /top$_reset    ?  #xreg               :   
                               >>1$wr         ?  >>1/top$_port1_data :   
                                                 $RETAIN;
+   
+   //?['']$_port2_en
+   $$_port2_data[_width-1:0]  =  /xreg[/top$_port2_index]$value;
+   $$_port3_data[_width-1:0]  =  /xreg[/top$_port3_index]$value;
+   
    /cpuviz
       $rf_rd_en1 = /top$_port2_en;
       $rf_rd_en2 = /top$_port3_en;
@@ -73,26 +62,6 @@ m4+definitions(['
       $rf_rd_index2[4:0] = /top$_port3_index;
       $rf_wr_index[4:0]  = /top$_port1_index;
       $rf_wr_en = /top$_port1_en;
-
-   //?['']$_port2_en
-   $$_port2_data[_width-1:0]  =  /xreg[/top$_port2_index]$value;
-
-   //?['']$_port3_en
-   $$_port3_data[_width-1:0]  =  /xreg[/top$_port3_index]$value;
-
-
-// A data memory in |cpu at the given stage. Reads and writes in the same stage, where reads are of the data written by the previous transaction.
-// \TLV dmem(@_stage)
-//    // Data Memory
-//    @_stage
-//       /dmem[15:0]
-//          $wr = |cpu$dmem_wr_en && (|cpu$dmem_addr == #dmem);
-//          $value[31:0] = |cpu$reset ?   #dmem :
-//                         $wr        ?   |cpu$dmem_wr_data :
-//                                        $RETAIN;
-//       ?$dmem_rd_en
-//          $dmem_rd_data[31:0] = /dmem[$dmem_addr]>>1$value;
-//       `BOGUS_USE($dmem_rd_data)
 
 \TLV dmem(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data)
    // Reg File
@@ -103,7 +72,7 @@ m4+definitions(['
       $value[_width-1:0]   =  /top$_reset    ?     #dmem               :   
                               >>1$wr         ?     >>1/top$_port1_data :   
                                                    $RETAIN;
-
+   
    //?['']$_port2_en
    $$_port2_data[_width-1:0] = /dmem[/top$_port2_index]$value;
 
@@ -113,7 +82,7 @@ m4+definitions(['
    \SV_plus
       logic [40*8-1:0] instr_strs [0:M4_NUM_INSTRS];
       assign instr_strs = '{m4_asm_mem_expr "END                                     "};
-   ///top
+   
    /cpuviz
       /defaults
          /xreg[31:0]
@@ -165,7 +134,6 @@ m4+definitions(['
             //debugger
             //
             // PC instr_mem pointer
-            //
             let pc            = this.svSigRef(`L0_pc_a0`);
             let rd_valid      = this.svSigRef(`L0_rd_valid_a0`);
             let rd            = this.svSigRef(`L0_rd_a0`);
