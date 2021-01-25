@@ -85,6 +85,7 @@ m4+definitions(['
       assign instr_strs = '{m4_asm_mem_expr "END                                     "};
    
    /cpuviz
+      $sticky_zero = 1'b0;
       
       $fetch_instr_str[40*8-1:0] = *instr_strs\[/top$pc[\$clog2(M4_NUM_INSTRS+1)+1:2]\];
       
@@ -134,7 +135,6 @@ m4+definitions(['
                   height: 300,
                   stroke: "black"
                })
-            
             return {objects: {imem_header, decode_header, rf_header, dmem_header, error_header, error_box}};
          },
          renderEach: function() {
@@ -157,49 +157,73 @@ m4+definitions(['
             let mnemonic      = this.svSigRef(`L0_mnemonic_a0`);
             let rf_wr_data    = this.svSigRef(`L0_rf_wr_data_a0`);
             
-            let missing_list = "";
+            var missing_list = "";
             
-            if (example    == null)
+            if (examp   == null){
                missing_list += "◾ $example    \n";
-            if (pc         == null)
+               examp    = '$sticky_zero';
+            }
+            if (pc         == null){
                missing_list += "◾ $pc         \n";
-            if (rd_valid   == null)
+               pc         = '$sticky_zero';
+            }
+            if (rd_valid   == null){
                missing_list += "◾ $rd_valid   \n";
-            if (rd         == null)
+               rd_valid   = '$sticky_zero';
+            }
+            if (rd         == null){
                missing_list += "◾ $rd         \n";
-            if (result     == null)
+               rd         = '$sticky_zero';
+            }
+            if (result     == null){
                missing_list += "◾ $result     \n";
-            if (src1_value == null)
+               result     = '$sticky_zero';
+            }
+            if (src1_value == null){
                missing_list += "◾ $src1_value \n";
-            if (src2_value == null)
+               src1_value = '$sticky_zero';
+            }
+            if (src2_value == null){
                missing_list += "◾ $src2_value \n";
-            if (imm        == null)
+               src2_value = '$sticky_zero';
+            }
+            if (imm        == null){
                missing_list += "◾ $imm        \n";
-            if (imm_valid  == null)
+               imm        = '$sticky_zero';
+            }
+            if (imm_valid  == null){
                missing_list += "◾ $imm_valid  \n";
-            if (rs1        == null)
+               imm_valid  = '$sticky_zero';
+            }
+            if (rs1        == null){
                missing_list += "◾ $rs1        \n";
-            if (rs2        == null)
+               rs1        = '$sticky_zero';
+            }
+            if (rs2        == null){
                missing_list += "◾ $rs2        \n";
-            if (rs1_valid  == null)
+               rs2        = '$sticky_zero';
+            }
+            if (rs1_valid  == null){
                missing_list += "◾ $rs1_valid  \n";
-            if (rs2_valid  == null)
+               rs1_valid  = '$sticky_zero';
+            }
+            if (rs2_valid  == null){
                missing_list += "◾ $rs2_valid  \n";
-            if (valid      == null)
+               rs2_valid  = '$sticky_zero';
+            }
+            if (valid      == null){
                missing_list += "◾ $valid      \n";
-            if (mnemonic   == null)
+               valid      = '$sticky_zero';
+            }
+            if (mnemonic   == null){
                missing_list += "◾ $mnemonic   \n";
-            if (rf_wr_data == null)
+               mnemonic   = '$sticky_zero';
+            }
+            if (rf_wr_data == null){
                missing_list += "◾ $rf_wr_data \n";
+               rf_wr_data = '$sticky_zero';
+            }
             
-            let missing_fill = new fabric.Text(missing_list, {
-                  top: 420,
-                  left: -480,
-                  fontSize: 16,
-                  fontWeight: 500,
-                  fontFamily: "monospace",
-                  fill: "purple"
-               })
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
             
@@ -214,6 +238,7 @@ m4+definitions(['
                stroke: "#d0e8ff",
                strokeWidth: 2
             })
+            
             let rs1_arrow = new fabric.Line([330, 18 * '$rf_rd_index1'.asInt() + 6 - 40, 190, 75 + 18 * 2], {
                stroke: "#d0e8ff",
                strokeWidth: 2,
@@ -264,6 +289,7 @@ m4+definitions(['
                           ? `\n      ${regStr(true, $reg.asInt(NaN), $value.asInt(NaN))}`
                           : "";
             };
+            
             let str = `${regStr(rd_valid.asBool(false), rd.asInt(NaN), result.asInt(NaN))}\n` +
                       `  = ${mnemonic.asString()}${srcStr(1, rs1_valid, rs1, src1_value)}${srcStr(2, rs2_valid, rs2, src2_value)}\n` +
                       `      ${immStr(imm_valid.asBool(false), imm.asInt(NaN))}`;
@@ -382,6 +408,14 @@ m4+definitions(['
                }, 1000)
             }
             
+            let missing_fill = new fabric.Text(missing_list, {
+                  top: 420,
+                  left: -480,
+                  fontSize: 16,
+                  fontWeight: 500,
+                  fontFamily: "monospace",
+                  fill: "purple"
+               })
             
             return {objects: [pcPointer, pc_arrow, rs1_arrow, rs2_arrow, rd_arrow, instrWithValues, fetch_instr_viz, src1_value_viz, src2_value_viz, result_shadow, result_viz, ld_arrow, st_arrow, load_viz, store_viz, missing_fill]};
          }
