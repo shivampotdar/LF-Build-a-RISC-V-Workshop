@@ -50,7 +50,7 @@ m4+definitions(['
    
    $$_port2_data[_width-1:0]  =  $_port2_en ? /xreg[/top$_port2_index]$value : 'X;
    $$_port3_data[_width-1:0]  =  $_port3_en ? /xreg[/top$_port3_index]$value : 'X;
-   
+   m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['   
    /cpuviz
       $rf_rd_en1 = /top$_port2_en;
       $rf_rd_en2 = /top$_port3_en;
@@ -58,6 +58,7 @@ m4+definitions(['
       $rf_rd_index2[\$clog2(_entries)-1:0] = /top$_port3_index;
       $rf_wr_index[\$clog2(_entries)-1:0]  = /top$_port1_index;
       $rf_wr_en = /top$_port1_en;
+   '])
 
 \TLV dmem(_entries, _width, $_reset, _port1_mode, $_port1_en, $_port1_index, $_port1_data, _port2_mode, $_port2_en, $_port2_index, $$_port2_data)
    /dmem[_entries-1:0]
@@ -68,13 +69,13 @@ m4+definitions(['
                                                    $RETAIN;
    
    $$_port2_data[_width-1:0] = $_port2_en ? /dmem[/top$_port2_index]$value : 'X;
-   
+   m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['   
    /cpuviz
       $dmem_rd_en = /top$_port2_en;
       $dmem_rd_index[\$clog2(_entries)-1:0] = /top$_port2_index;
       $dmem_wr_en = /top$_port1_en;
       $dmem_wr_index[\$clog2(_entries)-1:0] = /top$_port1_index;
-      
+   '])   
 
 \TLV cpu_viz()
    m4_ifelse_block(m4_sp_graph_dangerous, 1, [''], ['
@@ -89,37 +90,37 @@ m4+definitions(['
       
       \viz_alpha
          initEach() {
-            let imem_header = new fabric.Text("Instr. Memory", {
+            let imem_header = new fabric.Text("📒 Instr. Memory", {
                   top: -29,
                   left: -440,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let decode_header = new fabric.Text("Instr. Decode", {
+            let decode_header = new fabric.Text("💭 Instr. Decode", {
                   top: 0,
-                  left: 65,
+                  left: 40,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let rf_header = new fabric.Text("Reg. File", {
+            let rf_header = new fabric.Text("🗃️ Reg. File", {
                   top: -29 - 40,
-                  left: 307,
+                  left: 280,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let dmem_header = new fabric.Text("Data Memory", {
+            let dmem_header = new fabric.Text("📂 Data Memory", {
                   top: -29 - 40,
                   left: 450,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let error_header = new fabric.Text("⚠ Missing Signals", {
+            let error_header = new fabric.Text("🚨 Missing Signals", {
                   top: 350,
-                  left: -440,
+                  left: -400,
                   fontSize: 18,
                   fontWeight: 800,
                   fill: "red",
@@ -133,6 +134,7 @@ m4+definitions(['
                   height: 300,
                   stroke: "black"
                })
+            
             return {objects: {imem_header, decode_header, rf_header, dmem_header, error_header, error_box}};
          },
          renderEach: function() {
@@ -153,7 +155,51 @@ m4+definitions(['
             let rs2_valid     = this.svSigRef(`L0_rs2_valid_a0`);
             let valid         = this.svSigRef(`L0_valid_a0`);
             let mnemonic      = this.svSigRef(`L0_mnemonic_a0`);
+            let rf_wr_data    = this.svSigRef(`L0_rf_wr_data_a0`);
             
+            let missing_list = "";
+            
+            if (example    == null)
+               missing_list += "◾ $example    \n";
+            if (pc         == null)
+               missing_list += "◾ $pc         \n";
+            if (rd_valid   == null)
+               missing_list += "◾ $rd_valid   \n";
+            if (rd         == null)
+               missing_list += "◾ $rd         \n";
+            if (result     == null)
+               missing_list += "◾ $result     \n";
+            if (src1_value == null)
+               missing_list += "◾ $src1_value \n";
+            if (src2_value == null)
+               missing_list += "◾ $src2_value \n";
+            if (imm        == null)
+               missing_list += "◾ $imm        \n";
+            if (imm_valid  == null)
+               missing_list += "◾ $imm_valid  \n";
+            if (rs1        == null)
+               missing_list += "◾ $rs1        \n";
+            if (rs2        == null)
+               missing_list += "◾ $rs2        \n";
+            if (rs1_valid  == null)
+               missing_list += "◾ $rs1_valid  \n";
+            if (rs2_valid  == null)
+               missing_list += "◾ $rs2_valid  \n";
+            if (valid      == null)
+               missing_list += "◾ $valid      \n";
+            if (mnemonic   == null)
+               missing_list += "◾ $mnemonic   \n";
+            if (rf_wr_data == null)
+               missing_list += "◾ $rf_wr_data \n";
+            
+            let missing_fill = new fabric.Text(missing_list, {
+                  top: 420,
+                  left: -480,
+                  fontSize: 16,
+                  fontWeight: 500,
+                  fontFamily: "monospace",
+                  fill: "purple"
+               })
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
             
@@ -188,7 +234,7 @@ m4+definitions(['
                strokeWidth: 3,
                visible: '$dmem_rd_en'.asBool()
             })
-            let st_arrow = new fabric.Line([470, 18 * '$dmem_wr_index'.asInt() + 6 - 40, 370, 18 * '$rf_rd_index1'.asInt() + 6 - 40], {
+            let st_arrow = new fabric.Line([470, 18 * '$dmem_wr_index'.asInt() + 6 - 40, 370, 18 * '$rf_rd_index2'.asInt() + 6 - 40], {
                stroke: "#d0d0ff",
                strokeWidth: 3,
                visible: '$dmem_wr_en'.asBool()
@@ -268,6 +314,45 @@ m4+definitions(['
                  onChange: this.global.canvas.renderAll.bind(this.global.canvas),
                  duration: 500
             })}, 500)
+            
+            let load_viz = new fabric.Text(rf_wr_data.asInt(0).toString(), {
+               left: 470,
+               top: 18 * '$dmem_rd_index'.asInt() + 6 - 40,
+               fill: "blue",
+               fontSize: 14,
+               fontFamily: "monospace",
+               fontWeight: 1000,
+               visible: false
+            })
+            if ('$dmem_rd_en'.asBool()) {
+               setTimeout(() => {
+                  load_viz.setVisible(true)
+                  load_viz.animate({left: 350, top: 18 * '$rf_wr_index'.asInt() - 40}, {
+                    onChange: this.global.canvas.renderAll.bind(this.global.canvas),
+                    duration: 500
+                  })
+               }, 1000)
+            }
+            
+            let store_viz = new fabric.Text(src2_value.asInt(0).toString(), {
+               left: 350,
+               top: 18 * '$rf_rd_index2'.asInt() - 40,
+               fill: "blue",
+               fontSize: 14,
+               fontFamily: "monospace",
+               fontWeight: 1000,
+               visible: false
+            })
+            if ('$dmem_wr_en'.asBool()) {
+               setTimeout(() => {
+                  store_viz.setVisible(true)
+                  store_viz.animate({left: 510, top: 18 * '$dmem_wr_index'.asInt() - 40}, {
+                    onChange: this.global.canvas.renderAll.bind(this.global.canvas),
+                    duration: 500
+                  })
+               }, 1000)
+            }
+            
             let result_shadow = new fabric.Text(result.asInt(0).toString(), {
                left: 146,
                top: 70,
@@ -286,7 +371,7 @@ m4+definitions(['
                fontWeight: 800,
                visible: false
             })
-            if (rd_valid.asBool()) {
+            if (rd_valid.asBool() && !'$dmem_rd_en'.asBool()) {
                setTimeout(() => {
                   result_viz.setVisible(true)
                   result_shadow.setVisible(true)
@@ -296,11 +381,9 @@ m4+definitions(['
                   })
                }, 1000)
             }
-            //let load_viz = new fabric.Text('$dmem_rd_data'.asInt(0).toString(), {
-            //   left: 
             
             
-            return {objects: [pcPointer, pc_arrow, rs1_arrow, rs2_arrow, rd_arrow, instrWithValues, fetch_instr_viz, src1_value_viz, src2_value_viz, result_shadow, result_viz, ld_arrow, st_arrow]};
+            return {objects: [pcPointer, pc_arrow, rs1_arrow, rs2_arrow, rd_arrow, instrWithValues, fetch_instr_viz, src1_value_viz, src2_value_viz, result_shadow, result_viz, ld_arrow, st_arrow, load_viz, store_viz, missing_fill]};
          }
       
       /imem[m4_eval(M4_NUM_INSTRS-1):0]  // TODO: Cleanly report non-integer ranges.
