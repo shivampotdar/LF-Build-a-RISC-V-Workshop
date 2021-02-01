@@ -150,34 +150,34 @@ m4+definitions(['
                }
                return sig
             }
-            let example       =   siggen("error_eg")
-            let pc            =   siggen("pc");
-            let rd_valid      =   siggen("rd_valid");
-            let rd            =   siggen("rd");
-            let result        =   siggen("result");
-            let src1_value    =   siggen("src1_value");
-            let src2_value    =   siggen("src2_value");
-            let imm           =   siggen("imm");
-            let imm_valid     =   siggen("imm_valid");
-            let rs1           =   siggen("rs1");
-            let rs2           =   siggen("rs2");
-            let rs1_valid     =   siggen("rs1_valid");
-            let rs2_valid     =   siggen("rs2_valid");
-            let valid         =   siggen("valid");
-            let mnemonic      =   siggen("mnemonic");
-            let rf_wr_data    =   siggen("rf_wr_data");
+            var example       =   siggen("error_eg")
+            var pc            =   siggen("pc");
+            var rd_valid      =   siggen("rd_valid");
+            var rd            =   siggen("rd");
+            var result        =   siggen("result");
+            var src1_value    =   siggen("src1_value");
+            var src2_value    =   siggen("src2_value");
+            var imm           =   siggen("imm");
+            var imm_valid     =   siggen("imm_valid");
+            var rs1           =   siggen("rs1");
+            var rs2           =   siggen("rs2");
+            var rs1_valid     =   siggen("rs1_valid");
+            var rs2_valid     =   siggen("rs2_valid");
+            var valid         =   siggen("valid");
+            var mnemonic      =   siggen("mnemonic");
+            var rf_wr_data    =   siggen("rf_wr_data");
             
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
             
             let pcPointer = new fabric.Text("👉", {
-               top: 18 * (pc.asInt() / 4),
+               top: 18 * (pc.asInt() >> 2),
                left: -295,
                fill: color,
                fontSize: 14,
                fontFamily: "monospace"
             })
-            let pc_arrow = new fabric.Line([23, 18 * (pc.asInt() / 4) + 6, 46, 35], {
+            let pc_arrow = new fabric.Line([23, 18 * (pc.asInt() >> 2) + 6, 46, 35], {
                stroke: "#d0e8ff",
                strokeWidth: 2
             })
@@ -198,13 +198,13 @@ m4+definitions(['
                visible: '$rf_wr_en'.asBool()
             })
             let ld_arrow = new fabric.Line([470, 18 * '$dmem_rd_index'.asInt() + 6 - 40, 175, 75 + 18 * 1], {
-               stroke: "#d0d0ff",
+               stroke: "#d0e8ff",
                strokeWidth: 2,
                visible: '$dmem_rd_en'.asBool()
             })
             let st_arrow = new fabric.Line([470, 18 * '$dmem_wr_index'.asInt() + 6 - 40, 175, 75 + 18 * 1], {
                stroke: "#d0d0ff",
-               strokeWidth: 2,
+               strokeWidth: 3,
                visible: '$dmem_wr_en'.asBool()
             })
             //
@@ -246,7 +246,7 @@ m4+definitions(['
             // Animate fetch (and provide onChange behavior for other animation).
             
             let fetch_instr_viz = new fabric.Text('$fetch_instr_str'.asString(), {
-               top: 18 * (pc.asInt() / 4),
+               top: 18 * (pc.asInt() >> 2),
                left: -272,
                fill: "blue",
                fontSize: 14,
