@@ -45,7 +45,7 @@ m4+definitions(['
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index != 5'b0) && (/top$_port1_index == #xreg);
       $value[_width-1:0]   =  /top$_reset    ?  #xreg               :   
-                              >>1$wr         ?  >>1/top$_port1_data :   
+                              >>1$wr         ?  /top>>1$_port1_data :   
                                                 $RETAIN;   
    
    $$_port2_data[_width-1:0]  =  $_port2_en ? /xreg[/top$_port2_index]$value : 'X;
@@ -65,7 +65,7 @@ m4+definitions(['
       //$wr = m4_forloop(['m4_regport_loop'], 1, 4, ['m4_ifelse_block(['['_port']m4_regport_loop['_mode']'], W, ['['$_port']m4_regport_loop['_en'] || '], [''])'])
       $wr                  =  /top$_port1_en && (/top$_port1_index == #dmem);
       $value[_width-1:0]   =  /top$_reset    ?     #dmem               :   
-                              >>1$wr         ?     >>1/top$_port1_data :   
+                              >>1$wr         ?     /top>>1$_port1_data :   
                                                    $RETAIN;
    
    $$_port2_data[_width-1:0] = $_port2_en ? /dmem[/top$_port2_index]$value : 'X;
@@ -98,21 +98,21 @@ m4+definitions(['
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let decode_header = new fabric.Text("💭 Instr. Decode", {
+            let decode_header = new fabric.Text("⚙️ Instr. Decode", {
                   top: 0,
                   left: 40,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let rf_header = new fabric.Text("🗃️ Reg. File", {
+            let rf_header = new fabric.Text("📂 Reg. File", {
                   top: -29 - 40,
                   left: 280,
                   fontSize: 18,
                   fontWeight: 800,
                   fontFamily: "monospace"
                })
-            let dmem_header = new fabric.Text("📂 Data Memory", {
+            let dmem_header = new fabric.Text("🗃️ Data Memory", {
                   top: -29 - 40,
                   left: 450,
                   fontSize: 18,
@@ -138,91 +138,34 @@ m4+definitions(['
             return {objects: {imem_header, decode_header, rf_header, dmem_header, error_header, error_box}};
          },
          renderEach: function() {
-            //debugger
+            debugger
             //
-            // PC instr_mem pointer
-            let pc            = this.svSigRef(`L0_pc_a0`);
-            let rd_valid      = this.svSigRef(`L0_rd_valid_a0`);
-            let rd            = this.svSigRef(`L0_rd_a0`);
-            let result        = this.svSigRef(`L0_result_a0`);
-            let src1_value    = this.svSigRef(`L0_src1_value_a0`);
-            let src2_value    = this.svSigRef(`L0_src2_value_a0`);
-            let imm           = this.svSigRef(`L0_imm_a0`);
-            let imm_valid     = this.svSigRef(`L0_imm_valid_a0`);
-            let rs1           = this.svSigRef(`L0_rs1_a0`);
-            let rs2           = this.svSigRef(`L0_rs2_a0`);
-            let rs1_valid     = this.svSigRef(`L0_rs1_valid_a0`);
-            let rs2_valid     = this.svSigRef(`L0_rs2_valid_a0`);
-            let valid         = this.svSigRef(`L0_valid_a0`);
-            let mnemonic      = this.svSigRef(`L0_mnemonic_a0`);
-            let rf_wr_data    = this.svSigRef(`L0_rf_wr_data_a0`);
-            
             var missing_list = "";
             
-            if (examp   == null){
-               missing_list += "◾ $example    \n";
-               examp    = '$sticky_zero';
+            siggen = (name) => {
+               var sig = this.svSigRef(`L0_${name}_a0`)
+               if (sig == null) {
+                  missing_list += `◾ $${name}      \n`;
+                  sig         = '$sticky_zero';
+               }
+               return sig
             }
-            if (pc         == null){
-               missing_list += "◾ $pc         \n";
-               pc         = '$sticky_zero';
-            }
-            if (rd_valid   == null){
-               missing_list += "◾ $rd_valid   \n";
-               rd_valid   = '$sticky_zero';
-            }
-            if (rd         == null){
-               missing_list += "◾ $rd         \n";
-               rd         = '$sticky_zero';
-            }
-            if (result     == null){
-               missing_list += "◾ $result     \n";
-               result     = '$sticky_zero';
-            }
-            if (src1_value == null){
-               missing_list += "◾ $src1_value \n";
-               src1_value = '$sticky_zero';
-            }
-            if (src2_value == null){
-               missing_list += "◾ $src2_value \n";
-               src2_value = '$sticky_zero';
-            }
-            if (imm        == null){
-               missing_list += "◾ $imm        \n";
-               imm        = '$sticky_zero';
-            }
-            if (imm_valid  == null){
-               missing_list += "◾ $imm_valid  \n";
-               imm_valid  = '$sticky_zero';
-            }
-            if (rs1        == null){
-               missing_list += "◾ $rs1        \n";
-               rs1        = '$sticky_zero';
-            }
-            if (rs2        == null){
-               missing_list += "◾ $rs2        \n";
-               rs2        = '$sticky_zero';
-            }
-            if (rs1_valid  == null){
-               missing_list += "◾ $rs1_valid  \n";
-               rs1_valid  = '$sticky_zero';
-            }
-            if (rs2_valid  == null){
-               missing_list += "◾ $rs2_valid  \n";
-               rs2_valid  = '$sticky_zero';
-            }
-            if (valid      == null){
-               missing_list += "◾ $valid      \n";
-               valid      = '$sticky_zero';
-            }
-            if (mnemonic   == null){
-               missing_list += "◾ $mnemonic   \n";
-               mnemonic   = '$sticky_zero';
-            }
-            if (rf_wr_data == null){
-               missing_list += "◾ $rf_wr_data \n";
-               rf_wr_data = '$sticky_zero';
-            }
+            let example       =   siggen("error_eg")
+            let pc            =   siggen("pc");
+            let rd_valid      =   siggen("rd_valid");
+            let rd            =   siggen("rd");
+            let result        =   siggen("result");
+            let src1_value    =   siggen("src1_value");
+            let src2_value    =   siggen("src2_value");
+            let imm           =   siggen("imm");
+            let imm_valid     =   siggen("imm_valid");
+            let rs1           =   siggen("rs1");
+            let rs2           =   siggen("rs2");
+            let rs1_valid     =   siggen("rs1_valid");
+            let rs2_valid     =   siggen("rs2_valid");
+            let valid         =   siggen("valid");
+            let mnemonic      =   siggen("mnemonic");
+            let rf_wr_data    =   siggen("rf_wr_data");
             
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
