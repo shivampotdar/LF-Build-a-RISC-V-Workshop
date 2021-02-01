@@ -170,7 +170,7 @@ m4+definitions(['
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
             
-            let pcPointer = new fabric.Text("->", {
+            let pcPointer = new fabric.Text("👉", {
                top: 18 * (pc.asInt() / 4),
                left: -295,
                fill: color,
@@ -192,19 +192,19 @@ m4+definitions(['
                strokeWidth: 2,
                visible: '$rf_rd_en2'.asBool()
             })
-            let rd_arrow = new fabric.Line([330, 18 * '$rf_wr_index'.asInt() + 6 - 40, 168, 75 + 18 * 0], {
+            let rd_arrow = new fabric.Line([310, 18 * '$rf_wr_index'.asInt() + 6 - 40, 168, 75 + 18 * 0], {
                stroke: "#d0d0ff",
                strokeWidth: 3,
                visible: '$rf_wr_en'.asBool()
             })
-            let ld_arrow = new fabric.Line([470, 18 * '$dmem_rd_index'.asInt() + 6 - 40, 370, 18 * '$rf_wr_index'.asInt() + 6 - 40], {
+            let ld_arrow = new fabric.Line([470, 18 * '$dmem_rd_index'.asInt() + 6 - 40, 175, 75 + 18 * 1], {
                stroke: "#d0d0ff",
-               strokeWidth: 3,
+               strokeWidth: 2,
                visible: '$dmem_rd_en'.asBool()
             })
-            let st_arrow = new fabric.Line([470, 18 * '$dmem_wr_index'.asInt() + 6 - 40, 370, 18 * '$rf_rd_index2'.asInt() + 6 - 40], {
+            let st_arrow = new fabric.Line([470, 18 * '$dmem_wr_index'.asInt() + 6 - 40, 175, 75 + 18 * 1], {
                stroke: "#d0d0ff",
-               strokeWidth: 3,
+               strokeWidth: 2,
                visible: '$dmem_wr_en'.asBool()
             })
             //
@@ -296,16 +296,23 @@ m4+definitions(['
             if ('$dmem_rd_en'.asBool()) {
                setTimeout(() => {
                   load_viz.setVisible(true)
-                  load_viz.animate({left: 350, top: 18 * '$rf_wr_index'.asInt() - 40}, {
+                  load_viz.animate({left: 165, top: 75 + 18 * 1 - 5}, {
                     onChange: this.global.canvas.renderAll.bind(this.global.canvas),
                     duration: 500
                   })
+                  setTimeout(() => {
+                     load_viz.setVisible(true)
+                     load_viz.animate({left: 350, top: 18 * '$rf_wr_index'.asInt() - 40}, {
+                       onChange: this.global.canvas.renderAll.bind(this.global.canvas),
+                       duration: 500
+                     })
+                     }, 1000)
                }, 1000)
             }
             
             let store_viz = new fabric.Text(src2_value.asInt(0).toString(), {
-               left: 350,
-               top: 18 * '$rf_rd_index2'.asInt() - 40,
+               left: 165,
+               top: 75 + 18 * 1 - 5,
                fill: "blue",
                fontSize: 14,
                fontFamily: "monospace",
@@ -315,7 +322,7 @@ m4+definitions(['
             if ('$dmem_wr_en'.asBool()) {
                setTimeout(() => {
                   store_viz.setVisible(true)
-                  store_viz.animate({left: 510, top: 18 * '$dmem_wr_index'.asInt() - 40}, {
+                  store_viz.animate({left: 515, top: 18 * '$dmem_wr_index'.asInt() - 40}, {
                     onChange: this.global.canvas.renderAll.bind(this.global.canvas),
                     duration: 500
                   })
