@@ -307,7 +307,7 @@ m4+definitions(['
                        duration: 500
                      })
                      }, 1000)
-               }, 1000)
+               }, 500)
             }
             
             let store_viz = new fabric.Text(src2_value.asInt(0).toString(), {
@@ -421,8 +421,8 @@ m4+definitions(['
                return {}  // {objects: {reg: reg}};
             },
             renderEach: function() {
-               let rd = '$rd'.asBool();
-               let mod = '$wr'.asBool();
+               let rd = '$rd'.asBool(false);
+               let mod = '$wr'.asBool(false);
                let reg = parseInt(this.getIndex());
                let regIdent = reg.toString().padEnd(2, " ");
                let newValStr = regIdent + ": ";
