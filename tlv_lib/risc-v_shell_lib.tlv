@@ -169,7 +169,6 @@ m4+definitions(['
             
             let color = !(valid.asBool()) ? "gray" :
                                             "blue";
-            
             let pcPointer = new fabric.Text("👉", {
                top: 18 * (pc.asInt() >> 2),
                left: -295,
@@ -221,10 +220,12 @@ m4+definitions(['
             //
             // Instruction with values.
             //
+            
             let regStr = (valid, regNum, regValue) => {
                return valid ? `r${regNum}` : `rX`  // valid ? `r${regNum} (${regValue})` : `rX`
             };
             let immStr = (valid, immValue) => {
+               immValue = parseInt(immValue,2) + 2*(immValue[0] << 31)
                return valid ? `i[${immValue}]` : ``;
             };
             let srcStr = ($src, $valid, $reg, $value) => {
@@ -232,10 +233,9 @@ m4+definitions(['
                           ? `\n      ${regStr(true, $reg.asInt(NaN), $value.asInt(NaN))}`
                           : "";
             };
-            
             let str = `${regStr(rd_valid.asBool(false), rd.asInt(NaN), result.asInt(NaN))}\n` +
                       `  = ${mnemonic.asString()}${srcStr(1, rs1_valid, rs1, src1_value)}${srcStr(2, rs2_valid, rs2, src2_value)}\n` +
-                      `      ${immStr(imm_valid.asBool(false), imm.asInt(NaN))}`;
+                      `      ${immStr(imm_valid.asBool(false), imm.asBinaryStr())}`;
             let instrWithValues = new fabric.Text(str, {
                top: 70,
                left: 65,
@@ -371,7 +371,7 @@ m4+definitions(['
          }
       
       /imem[m4_eval(M4_NUM_INSTRS-1):0]  // TODO: Cleanly report non-integer ranges.
-         $rd_viz = !/top$reset && /top$pc[4:2] == #imem;
+         $rd_viz = !/top$reset && /top$pc[31:2] == #imem;
          $instr[31:0] = *instrs\[#imem\];
          $instr_str[40*8-1:0] = *instr_strs[imem];
          \viz_alpha
@@ -407,20 +407,25 @@ m4+definitions(['
                this.getInitObject("disassembled").set({textBackgroundColor: '$rd_viz'.asBool() ? "#b0ffff" : "white"})
             }
       
+      //\viz_alpha
+      //   for(i = 0; i<32; i++){
+      //      let rd = 
+      
       /xreg[31:0]
          $ANY = /top/xreg<>0$ANY;
-         $rd = (/cpuviz$rf_rd_en1 && /cpuviz$rf_rd_index1 == #xreg) ||
-               (/cpuviz$rf_rd_en2 && /cpuviz$rf_rd_index2 == #xreg);
+         $rd = (/top/cpuviz$rf_rd_en1 && (/top/cpuviz$rf_rd_index1 == #xreg)) ||
+               (/top/cpuviz$rf_rd_en2 && (/top/cpuviz$rf_rd_index2 == #xreg));
+         //$wr = (/top/cpuviz$rf_wr_en && (/top/cpuviz$rf_wr_index == #xreg));
          \viz_alpha
             initEach: function() {
                return {}  // {objects: {reg: reg}};
             },
             renderEach: function() {
-               let rd = '$rd'.asBool(false);
-               let mod = '$wr'.asBool(false);
+               let rd = '$rd'.asBool();
+               let mod = '$wr'.asBool();
                let reg = parseInt(this.getIndex());
                let regIdent = reg.toString().padEnd(2, " ");
-               let newValStr = regIdent + ": " + (mod ? '$value'.asInt(NaN).toString() : "");
+               let newValStr = regIdent + ": ";
                let reg_str = new fabric.Text(regIdent + ": " + '>>1$value'.asInt(NaN).toString(), {
                   top: 18 * this.getIndex() - 40,
                   left: 316,
@@ -452,7 +457,7 @@ m4+definitions(['
                let mod = '$wr'.asBool(false);
                let reg = parseInt(this.getIndex());
                let regIdent = reg.toString().padEnd(2, " ");
-               let newValStr = regIdent + ": " + (mod ? '$value'.asInt(NaN).toString() : "");
+               let newValStr = regIdent + ": ";
                let dmem_str = new fabric.Text(regIdent + ": " + '>>1$value'.asInt(NaN).toString(), {
                   top: 18 * this.getIndex() - 40,
                   left: 480,
